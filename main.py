@@ -3,6 +3,7 @@ import random
 import special_sym
 from tkinter import messagebox
 import pyperclip
+import json
 
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
@@ -30,6 +31,12 @@ def save():
     web = web_entry.get()
     email = e_name.get()
     pswrd = pwd_entry.get()
+    new_data = {
+        web: {
+            "email": email,
+            "password": pswrd,
+        }
+    }
 
     if len(web) == 0 or len(email) == 0 or len(pswrd) == 0 or web.isspace() or email.isspace() or pswrd.isspace():
         messagebox.showinfo(title="Oops", message="Please! don't leave any fields empty")
@@ -37,10 +44,41 @@ def save():
         is_ok = messagebox.askokcancel(title=web, message=f"These are the details entered: \nEmail: {email}"
                                                           f"\nPassword: {pswrd} \n Is it ok to save?")
         if is_ok:
-            with open("data.txt", "a") as data:
-                data.write(f"{web} | {email} | {pswrd}\n")
+            try:
+                with open("data.json", "r") as data_file:
+                    # reading the old data
+                    e_data = json.load(data_file)
+
+            except FileNotFoundError:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_data, data_file, indent=4)
+            else:
+                # updating old data
+                e_data.update(new_data)
+                with open("data.json", "w") as data_file:
+                    # saving the data
+                    json.dump(e_data, data_file, indent=4)
+            finally:
                 web_entry.delete(0, END)
                 pwd_entry.delete(0, END)
+        messagebox.showinfo(title="Thank you", message="Your credentials are saved successfully.")
+
+
+# ---------------------------- FIND PASSWORD ------------------------------- #
+def find_password():
+    web_find = web_entry.get()
+    try:
+        with open("data.json") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="No Data Exists!")
+    else:
+        if web_find in data:
+            e_mail = data[web_find]["email"]
+            pass_word = data[web_find]["password"]
+            messagebox.showinfo(title=web_find, message=f"Email: {e_mail}\n Password: {pass_word}")
+        else:
+            messagebox.showinfo(title="Error", message=f"No details for {web_find} exists.")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -71,15 +109,18 @@ add.grid(column=1, row=4, columnspan=2, padx=5, pady=5)
 genpass = Button(text="Generate Password", width=15, command=generate_pass)
 genpass.grid(column=2, row=3, columnspan=2)
 
+search = Button(text="Search", width=15, command=find_password)
+search.grid(column=2, row=1)
+
 # Entry
-web_entry = Entry(width=35)
-web_entry.grid(column=1, row=1, columnspan=2, padx=5, pady=5)
+web_entry = Entry(width=25)
+web_entry.grid(column=1, row=1, sticky="ew", padx=5, pady=5)
 web_entry.focus()
 
 e_name = Entry(width=35)
-e_name.grid(column=1, row=2, columnspan=2, padx=5, pady=5)
-e_name.insert(END, "anshuman9998@gmail.com")
+e_name.grid(column=1, row=2, columnspan=2, sticky="ew", padx=5, pady=5)
+e_name.insert(END, "")
 pwd_entry = Entry(width=23)
-pwd_entry.grid(column=1, row=3, padx=5, pady=5)
+pwd_entry.grid(column=1, row=3, sticky="ew", padx=5, pady=5)
 
 window.mainloop()
